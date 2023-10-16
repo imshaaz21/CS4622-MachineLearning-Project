@@ -1,14 +1,26 @@
+# %% [markdown]
+# ## Mount Google Drive to access data from Google Colab
+
 # %%
 from google.colab import drive
 drive.mount('/content/drive')
+
+# %% [markdown]
+# ## Define file paths for training, validation, and test data
 
 # %%
 train_loc = '/content/drive/MyDrive/CS4622 - Machine Learning/speech-based-classification-layer9/train.csv'
 valid_loc = '/content/drive/MyDrive/CS4622 - Machine Learning/speech-based-classification-layer9/valid.csv'
 test_loc = '/content/drive/MyDrive/CS4622 - Machine Learning/speech-based-classification-layer9/test.csv'
 
+# %% [markdown]
+# ## Import the Pandas library
+
 # %%
 import pandas as pd
+
+# %% [markdown]
+# ## Load the training, validation, and test data into Pandas DataFrames
 
 # %%
 # Load the data
@@ -31,6 +43,9 @@ train_df.tail()
 # %%
 train_df.shape
 
+# %% [markdown]
+# ## Count the number of NaN (missing) values in each label column (label_1, label_2, label_3, label_4)
+
 # %%
 nan_counts_label_1 = train_df['label_1'].isna().sum()
 nan_counts_label_2 = train_df['label_2'].isna().sum()
@@ -46,11 +61,17 @@ print(f"NaN count for label 4: {nan_counts_label_4}")
 # %%
 train_df.describe()
 
+# %% [markdown]
+# ## Define the list of feature columns (feature_1, feature_2, ..., feature_768)
+
 # %%
 FEATURES = [f'feature_{i}' for i in range(1,769)]
 
 # %% [markdown]
 # ## Label 1
+
+# %% [markdown]
+# ## Dropping null values for label 01
 
 # %%
 train1 = train_df[FEATURES + ['label_1']].dropna()
@@ -58,6 +79,9 @@ valid1 = valid_df[FEATURES + ['label_1']]
 
 # %%
 train1.head()
+
+# %% [markdown]
+# ## feature scaling
 
 # %%
 from sklearn.preprocessing import StandardScaler
@@ -77,7 +101,7 @@ x_train1 = pd.DataFrame(scaler.fit_transform(x_train1),columns=FEATURES)
 x_valid1 = pd.DataFrame(scaler.transform(x_valid1),columns=FEATURES)
 
 # %% [markdown]
-# ### Random Forest Classifier with Grid Search
+# ## SVM
 
 # %%
 from sklearn import svm
@@ -89,6 +113,9 @@ clf.fit(x_train1,y_train1)
 # %%
 y_pred1 = clf.predict(x_valid1)
 
+# %% [markdown]
+# ### custom function for finding accuracy, precision, and recall
+
 # %%
 from sklearn import metrics
 
@@ -99,6 +126,9 @@ def find_accuracy(Y_pred,Y_valid):
 
 # %%
 find_accuracy(y_pred1,y_valid1)
+
+# %% [markdown]
+# ## RandomForestClassifier
 
 # %%
 from sklearn.ensemble import RandomForestClassifier
@@ -113,6 +143,9 @@ y_pred1_rf = rf_classifier.predict(x_valid1)
 
 # %%
 find_accuracy(y_pred1_rf,y_valid1)
+
+# %% [markdown]
+# # LogisticRegression with RandomizedSearchCV (Hyperparameter tuning)
 
 # %%
 from sklearn.linear_model import LogisticRegression
@@ -137,13 +170,13 @@ logistic_predictions = logistic_best_classifier.predict(x_valid1)
 # %%
 find_accuracy(logistic_predictions,y_valid1)
 
+# %% [markdown]
+# ## Principal Component Analysis
+
 # %%
 from sklearn.decomposition import PCA
 
 candidate_n_components = [0.99,.95]
-
-# %% [markdown]
-# ### PCA
 
 # %%
 best_n_components = None
@@ -178,11 +211,17 @@ X_train_pca.shape
 # %%
 find_accuracy(y_pred_rf,y_valid1)
 
+# %% [markdown]
+# ## SVM with PCA
+
 # %%
 svm_classifier = svm.SVC(kernel='linear')
 svm_classifier.fit(X_train_pca, y_train1)
 svm_y_pred = svm_classifier.predict(X_test_pca)
 find_accuracy(svm_y_pred,y_valid1)
+
+# %% [markdown]
+# ## LogisticRegression with PCA
 
 # %%
 logistic_classifier = LogisticRegression(C=0.1)
@@ -217,6 +256,9 @@ x_valid_filtered1 = x_valid1.drop(columns=correlated_features_to_drop1)
 
 # %%
 print("Number of features left after dropping correlated features:", x_train_filtered1.shape[1])
+
+# %% [markdown]
+# ## LogisticRegression with hyper parameter tuning
 
 # %%
 from sklearn.model_selection import GridSearchCV
